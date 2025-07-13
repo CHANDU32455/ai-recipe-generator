@@ -1,0 +1,180 @@
+📓 Today’s Notes – AWS EC2 & S3 Exploration
+📅 Date: July 2, 2025
+
+🧑‍💻 What We Explored
+✅ EC2 (Elastic Compute Cloud)
+Launched a Linux EC2 instance (Amazon Linux)
+
+Connected using SSH + PEM key
+
+Installed and configured NGINX web server
+
+Served index.html from custom directory
+
+Adjusted file and directory permissions using chmod
+
+Explored 403 errors and NGINX root issues
+
+Confirmed billing model: free tier covers limited hours monthly
+
+Learned about termination behavior (root volume gets deleted by default)
+
+Discussed .pem key reuse across multiple instances
+
+✅ S3 (Simple Storage Service)
+Created a bucket named roughbucket2025
+
+Uploaded index.html and tested public access
+
+Enabled Static Website Hosting
+
+Applied bucket policy to allow public access to objects
+
+Discussed HTTP-only access in S3 static sites
+
+Removed the bucket and explored how to close and clean up S3 resources
+
+Discussed CloudFront to enable HTTPS access and caching
+
+⚙️ Technical Commands Used
+bash
+Copy code
+# Connect to EC2
+ssh -i mykey.pem ec2-user@<public-ip>
+
+# Install and start NGINX
+sudo yum install nginx -y
+sudo systemctl start nginx
+sudo systemctl enable nginx
+
+# Set NGINX root directory in config
+sudo nano /etc/nginx/nginx.conf
+# Updated root to:
+# root /home/ec2-user;
+
+# Set permissions
+sudo chmod 755 /home/ec2-user
+sudo chmod 644 index.html
+
+# Restart NGINX
+sudo systemctl restart nginx
+🗂️ S3 – Storage Variants & Use Cases
+Amazon S3 provides several storage classes, each tailored to different data access patterns and costs:
+
+Storage Class	Description	Ideal Use Case
+S3 Standard	High durability & availability. Frequent access.	Website hosting, app data, user uploads
+S3 Intelligent-Tiering	Auto-moves data between tiers based on usage	Unknown access patterns
+S3 Standard-IA	Infrequent Access. Cheaper, but charged per retrieval.	Backup data, less-frequently accessed logs
+S3 One Zone-IA	Single AZ, less redundancy. Cheaper.	Re-creatable, non-critical backups
+S3 Glacier Instant Retrieval	Near real-time access to archive data.	Archived content with rare, but quick access
+S3 Glacier Flexible Retrieval	Low-cost archival with retrieval in minutes to hours	Long-term archives (e.g., compliance docs)
+S3 Glacier Deep Archive	Cheapest, hours to retrieve.	Long-term cold storage
+S3 Reduced Redundancy (deprecated)	Older, lower-durability option. Replaced by newer classes.	(No longer recommended)
+
+🔍 You can assign different storage classes per object, automate transitions with lifecycle rules, and optimize cost.
+
+🌍 Hosting a Static Website on S3 (Steps Recap)
+Create an S3 Bucket
+
+Unique globally
+
+Disable Block Public Access
+
+Upload Files
+
+index.html, style.css, assets/, etc.
+
+Enable Static Website Hosting
+
+Set index document and error document
+
+Get the HTTP endpoint
+
+Make Objects Public
+
+Either:
+
+Set Bucket Policy
+
+Or make individual files public
+
+(Optional) Attach to CloudFront
+
+Enable HTTPS
+
+Enable caching via CDN
+
+Add custom domain (via Route 53 or external DNS)
+
+🔐 Example Bucket Policy for Public Hosting
+json
+Copy code
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicReadGetObject",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::roughbucket2025/*"
+    }
+  ]
+}
+📌 EC2 vs S3 – Summary
+Feature	EC2	S3
+Purpose	Compute – run apps, scripts, servers	Object Storage – store files, assets
+Cost Model	Per-second/hour billing	Per-GB storage, plus request pricing
+Example Use	Web server, backend API	Static websites, backups, media storage
+Free Tier	750 hrs/month (t2.micro)	5 GB storage, 20K GETs, 2K PUTs/month
+
+✅ What's Next?
+🔄 Add a file upload form on your static page and push to S3 via SDK
+
+🌐 Add a custom domain (using Route 53 or your DNS)
+
+📤 Explore S3 Multipart Upload for large files
+
+🧊 Try transition rules: move files to Glacier after N days
+
+🔒 Experiment with access logs and object-level permissions
+
+🚀 Connect S3 with Lambda triggers (e.g., on upload)
+
+
+
+----------------------what happens with private s3..?
+
+✅ How Companies Use S3 Securely (In Brief)
+Public Buckets Are Risky
+
+Anyone can access files if made public. Not safe for private or sensitive data.
+
+Companies Keep Buckets Private
+
+They block all public access in S3 settings to prevent unauthorized access.
+
+They Use CloudFront (CDN)
+
+CloudFront delivers the content securely (via HTTPS), globally, and quickly.
+
+It pulls data from S3 and acts like a safe layer between users and S3.
+
+They Use Signed URLs or Signed Cookies
+
+These are temporary secure links that allow controlled access to specific files.
+
+For example: A user can watch a video or download a file only for 15 minutes.
+
+Access for Applications via IAM Roles
+
+EC2, Lambda, or backend systems access S3 using secure IAM roles, not public URLs.
+
+💡 Example:
+A video platform:
+
+Stores videos in private S3
+
+Delivers them via CloudFront
+
+Each user gets a signed URL for limited-time access
