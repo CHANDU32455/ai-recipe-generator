@@ -67,7 +67,3 @@ export default tseslint.config([
   },
 ])
 ```
-=======
-# ai-recipe-generator
-aws cool stuff
->>>>>>> 53f45ed983d13123a156c110b032ed1dfc643d68
